@@ -14,8 +14,8 @@ import {
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {Link} from 'react-router-dom'
-import {logo} from "../assets"
+import { Link } from 'react-router-dom';
+import { logo } from "../assets";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,8 +23,7 @@ function Navbar() {
   const [isLogin, setIsLogin] = useState(true);
   const [loginMethod, setLoginMethod] = useState('email');
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     mobile_no: '',
     role: '', // Default role is Patient
@@ -75,15 +74,17 @@ function Navbar() {
     try {
       const response = await axios.post('http://localhost:3000/auth/register', formData);
 
-      const userId = response.data.user._id; // Extract 
-  
+      const userId = response.data.user._id; //
+      //  Extract user ID
+      const userRole = formData.role;
+
       // Optionally, store the user ID in localStorage or state
       localStorage.setItem('userId', userId);
-      
- 
+      localStorage.setItem('role', userRole);
+
       toast.success(response.data.message);
 
-      setFormData({ name: '', email: '', mobile_no: '', role: '' });
+      setFormData({ fullName: '', email: '', mobile_no: '', role: '' });
       setIsLoading(false);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Sign-up failed');
@@ -99,6 +100,8 @@ function Navbar() {
         email: loginMethod === 'email' ? formData.email : '',
         mobile_no: loginMethod === 'mobile' ? formData.mobile_no : '',
       });
+      
+      
       toast.success(response.data.message);
       setIsOtpSent(true);
       setIsLoading(false);
@@ -117,12 +120,40 @@ function Navbar() {
         mobile_no: loginMethod === 'mobile' ? formData.mobile_no : '',
         otp,
       });
+      
+      
+      const { token} = response.data;
+      const role = response.data.user.role; // Extract user role from the response
+      const userId = response.data.user._id; // Extract user ID from the response
+      const fullName = response.data.user.fullName; // Extract full name from the response
+      const email = response.data.user.email; // Extract email from the response
+      const mobile_no = response.data.user.mobile_no; // Extract mobile number from the response
+     
+      
+
+      // Store token and role in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', role);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('fullName', fullName); // Store full name in localStorage
+      localStorage.setItem('email', email); // Store email in localStorage
+      localStorage.setItem('mobile_no', mobile_no); // Store mobile number in localStorage
+       // Store user ID in localStorage
       toast.success(response.data.message);
       setOtp('');
       localStorage.setItem('token', response.data.token);
       closePopup();
       setIsLoggedIn(true);
-      navigate('/patient-dashboard');
+
+      // Redirect based on role
+      if (role === 'Admin') {
+        navigate('/admin-dashboard');
+      } else if (role === 'Doctor') {
+        navigate('/doctor-dashboard');
+      } else {
+        navigate('/patient-dashboard');
+      }
+
       setIsLoading(false);
     } catch (error) {
       toast.error(error.response?.data?.message || 'OTP verification failed');
@@ -132,6 +163,8 @@ function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userId'); // Remove user ID from localStorage  
     setIsLoggedIn(false);
     toast.success('Logged out successfully');
   };
@@ -147,9 +180,6 @@ function Navbar() {
       toast.error('You must be logged in to book an appointment.');
       console.log("You must be logged in to book an appointment.");
       return;
-    
-
-      
     }
     navigate('/book-appointment');
   };
@@ -159,7 +189,7 @@ function Navbar() {
       <Toaster />
       <nav className="p-3 relative" style={{ backgroundColor: '#4597B5' }}>
         <div className="container mx-auto flex flex-wrap items-center justify-between">
-        <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1">
             <img src={logo} alt="Docucare Logo" className="h-13 w-13" /> {/* Logo */}
             <Link to="/" className="text-white text-2xl font-bold">
               DocuCare
@@ -217,11 +247,9 @@ function Navbar() {
                   Home
                 </Link>
               </li>
-             
               <li>
                 <Link
                   to="/about"
-                  
                   className={`block mt-4 lg:inline-block lg:mt-0 ${
                     activeLink === 'about' ? 'text-yellow-400' : 'text-white'
                   } hover:text-yellow-400 transition duration-300`}
@@ -243,12 +271,12 @@ function Navbar() {
               </li>
             </ul>
             <div className="flex space-x-4 mt-4 lg:mt-0 lg:ml-4 justify-center">
-               <button
+              <button
                 className="bg-[#E3EDF2] text-[#2C698D] px-4 py-2 rounded hover:bg-[#5EBEC4] transition duration-300 flex items-center space-x-2"
                 onClick={() => {
-                  handleLinkClick('book-appointment'); // Call handleLinkClick
-                  handleBookAppointment(); // Call the existing function
-                }} // Add the handler here
+                  handleLinkClick('book-appointment');
+                  handleBookAppointment();
+                }}
               >
                 <FontAwesomeIcon icon={faCalendarCheck} />
                 <span>Book Appointment</span>
@@ -257,8 +285,8 @@ function Navbar() {
                 <button
                   className="bg-[#E3EDF2] text-[#2C698D] px-4 py-2 rounded hover:bg-[#5EBEC4] transition duration-300 flex items-center space-x-2"
                   onClick={() => {
-                    handleLinkClick('logout'); // Call handleLinkClick
-                    handleLogout(); // Call the existing function
+                    handleLinkClick('logout');
+                    handleLogout();
                   }}
                 >
                   <FontAwesomeIcon icon={faSignInAlt} />
@@ -268,8 +296,8 @@ function Navbar() {
                 <button
                   className="bg-[#E3EDF2] text-[#2C698D] px-4 py-2 rounded hover:bg-[#5EBEC4] transition duration-300 flex items-center space-x-2"
                   onClick={() => {
-                    handleLinkClick('login'); // Call handleLinkClick
-                    openPopup(); // Call the existing function
+                    handleLinkClick('login');
+                    openPopup();
                   }}
                 >
                   <FontAwesomeIcon icon={faSignInAlt} />
@@ -283,172 +311,161 @@ function Navbar() {
 
       {/* Popup for Login/SignUp */}
       {showPopup && (
-        <div className="fixed inset-0  flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-          <div className="flex justify-between items-center mb-4">
-  <button
-    onClick={closePopup}
-    className="text-gray-500 hover:text-gray-700 transition duration-300"
-  >
-    <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
-  </button>
- 
-  <button
-    onClick={closePopup}
-    className="text-gray-500 hover:text-gray-700 transition duration-300"
-  >
-    <FontAwesomeIcon icon={faTimes} />
-  </button>
-</div>
+            <div className="flex justify-between items-center mb-4">
+              <button
+                onClick={closePopup}
+                className="text-gray-500 hover:text-gray-700 transition duration-300"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+              </button>
+
+              <button
+                onClick={closePopup}
+                className="text-gray-500 hover:text-gray-700 transition duration-300"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
             {isOtpSent ? (
-  <>
-    <h3 className="text-lg font-semibold text-center mb-4 text-[#2C698D]">
-      OTP Verification
-    </h3>
-    <p className="text-sm text-gray-600 text-center mb-4">
-      Please enter the OTP sent to your registered email.
-    </p>
-    <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
-      <FontAwesomeIcon icon={faLock} className="text-gray-500 mr-2" />
-      <input
-        type="text"
-        name="otp"
-        placeholder="Enter OTP"
-        value={otp}
-        onChange={handleOtpChange}
-        className="w-full outline-none"
-      />
-    </div>
-    <button
-      onClick={handleVerifyOtp}
-      className="w-full bg-[#2C698D] text-white py-2 rounded hover:bg-[#5EBEC4] transition duration-300 transform hover:scale-105"
-      disabled={isLoading}
-    >
-      {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Verify OTP'}
-    </button>
-  </>
-) : isLogin ? (
-  <>
-    <h3 className="text-lg font-semibold text-center mb-4 text-[#2C698D]">
-      Welcome Back!
-    </h3>
-    <p className="text-sm text-gray-600 text-center mb-4">
-      Please log in to access your account.
-    </p>
-    <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
-      <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 mr-2" />
-      <input
-        type="email"
-        name="email"
-        placeholder="Enter your email"
-        value={formData.email}
-        onChange={handleInputChange}
-        className="w-full outline-none"
-      />
-    </div>
-    <button
-      onClick={handleLogin}
-      className="w-full bg-[#2C698D] text-white py-2 rounded hover:bg-[#5EBEC4] transition duration-300 transform hover:scale-105"
-      disabled={isLoading}
-    >
-      {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Send OTP'}
-    </button>
-    <p className="text-sm text-center mt-4">
-      Don't have an account?{' '}
-      <span
-        className="text-blue-500 cursor-pointer hover:underline"
-        onClick={switchToSignUp}
-      >
-        Sign Up
-      </span>
-    </p>
-  </>
-) : (
-  <>
-    <h3 className="text-lg font-semibold text-center mb-4 text-[#2C698D]">
-      Create an Account
-    </h3>
-    <p className="text-sm text-gray-600 text-center mb-4">
-      Sign up to book appointments and manage your health records.
-    </p>
-    <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
+              <>
+                <h3 className="text-lg font-semibold text-center mb-4 text-[#2C698D]">
+                  OTP Verification
+                </h3>
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  Please enter the OTP sent to your registered email.
+                </p>
+                <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
+                  <FontAwesomeIcon icon={faLock} className="text-gray-500 mr-2" />
+                  <input
+                    type="text"
+                    name="otp"
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={handleOtpChange}
+                    className="w-full outline-none"
+                  />
+                </div>
+                <button
+                  onClick={handleVerifyOtp}
+                  className="w-full bg-[#2C698D] text-white py-2 rounded hover:bg-[#5EBEC4] transition duration-300 transform hover:scale-105"
+                  disabled={isLoading}
+                >
+                  {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Verify OTP'}
+                </button>
+              </>
+            ) : isLogin ? (
+              <>
+                <h3 className="text-lg font-semibold text-center mb-4 text-[#2C698D]">
+                  Welcome Back!
+                </h3>
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  Please log in to access your account.
+                </p>
+                <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
+                  <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 mr-2" />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full outline-none"
+                  />
+                </div>
+                <button
+                  onClick={handleLogin}
+                  className="w-full bg-[#2C698D] text-white py-2 rounded hover:bg-[#5EBEC4] transition duration-300 transform hover:scale-105"
+                  disabled={isLoading}
+                >
+                  {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Send OTP'}
+                </button>
+                <p className="text-sm text-center mt-4">
+                  Don't have an account?{' '}
+                  <span
+                    className="text-blue-500 cursor-pointer hover:underline"
+                    onClick={switchToSignUp}
+                  >
+                    Sign Up
+                  </span>
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-center mb-4 text-[#2C698D]">
+                  Create an Account
+                </h3>
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  Sign up to book appointments and manage your health records.
+                </p>
+                <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
                   <FontAwesomeIcon icon={faUser} className="text-gray-500 mr-2" />
                   <input
                     type="text"
-                    name="firstName"
-                    placeholder="Enter your first name"
-                    value={formData.firstName}
+                    name="fullName"
+                    placeholder="Enter your full name"
+                    value={formData.fullName}
                     onChange={handleInputChange}
                     className="w-full outline-none"
                   />
                 </div>
                 <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
-                  <FontAwesomeIcon icon={faUser} className="text-gray-500 mr-2" />
+                  <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 mr-2" />
                   <input
-                    type="text"
-                    name="lastName"
-                    placeholder="Enter your last name"
-                    value={formData.lastName}
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
                     onChange={handleInputChange}
                     className="w-full outline-none"
                   />
                 </div>
-    <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
-      <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 mr-2" />
-      <input
-        type="email"
-        name="email"
-        placeholder="Enter your email"
-        value={formData.email}
-        onChange={handleInputChange}
-        className="w-full outline-none"
-      />
-    </div>
-    <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
-      <FontAwesomeIcon icon={faMobileAlt} className="text-gray-500 mr-2" />
-      <input
-        type="text"
-        name="mobile_no"
-        placeholder="Enter your mobile number"
-        value={formData.mobile_no}
-        onChange={handleInputChange}
-        className="w-full outline-none"
-      />
-    </div>
-    <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
-      <FontAwesomeIcon icon={faLock} className="text-gray-500 mr-2" />
-      <select
-        name="role"
-        value={formData.role}
-        onChange={handleInputChange}
-        className="w-full outline-none"
-      >
-        <option value="" disabled>
-          Select the Role
-        </option>
-        <option value="Patient">Patient</option>
-        <option value="Doctor">Doctor</option>
-        <option value="Admin">Admin</option>
-      </select>
-    </div>
-    <button
-      onClick={handleSignUp}
-      className="w-full bg-[#2C698D] text-white py-2 rounded hover:bg-[#5EBEC4] transition duration-300 transform hover:scale-105"
-      disabled={isLoading}
-    >
-      {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Sign Up'}
-    </button>
-    <p className="text-sm text-center mt-4">
-      Already have an account?{' '}
-      <span
-        className="text-blue-500 cursor-pointer hover:underline"
-        onClick={switchToLogin}
-      >
-        Login
-      </span>
-    </p>
-  </>
-)}
+                <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
+                  <FontAwesomeIcon icon={faMobileAlt} className="text-gray-500 mr-2" />
+                  <input
+                    type="text"
+                    name="mobile_no"
+                    placeholder="Enter your mobile number"
+                    value={formData.mobile_no}
+                    onChange={handleInputChange}
+                    className="w-full outline-none"
+                  />
+                </div>
+                <div className="flex items-center border border-gray-300 rounded mb-4 p-2">
+                  <FontAwesomeIcon icon={faLock} className="text-gray-500 mr-2" />
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className="w-full outline-none"
+                  >
+                    <option value="" disabled>
+                      Select the Role
+                    </option>
+                    <option value="Patient">Patient</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+                <button
+                  onClick={handleSignUp}
+                  className="w-full bg-[#2C698D] text-white py-2 rounded hover:bg-[#5EBEC4] transition duration-300 transform hover:scale-105"
+                  disabled={isLoading}
+                >
+                  {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Sign Up'}
+                </button>
+                <p className="text-sm text-center mt-4">
+                  Already have an account?{' '}
+                  <span
+                    className="text-blue-500 cursor-pointer hover:underline"
+                    onClick={switchToLogin}
+                  >
+                    Login
+                  </span>
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}

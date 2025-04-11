@@ -9,6 +9,7 @@ import billingRouter from './routes/Patient/billingRoutes.js';
 import adminRouter from './routes/Admin/adminRoute.js';
 import appointmentRouter from './routes/Patient/appointmentRoute.js';
 import messageRouter from './routes/Admin/messageRoute.js';
+
 const app = express();
 dotenv.config();
 const port = process.env.PORT;
@@ -26,6 +27,7 @@ app.use('/admin',adminRouter,messageRouter);
 app.use('/patients', patientRouter,appointmentRouter); // Use patient routes  
 app.use('/doctors', doctorRouter); // Use doctor routes
 app.use('/generate', billingRouter); // Use billing routes
+
 app.listen(port, () => {
     console.log(`Server started at ${port}`);
 });

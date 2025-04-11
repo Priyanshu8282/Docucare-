@@ -1,27 +1,58 @@
 import mongoose from "mongoose";
 
-const patientSchema = new mongoose.Schema(
+const userProfileSchema = mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the User model
-    age: { type: Number, required: true },
-    gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
-    bloodGroup: { type: String, enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] },
-    profilePicture: { type: String, trim: true },
-    allergies: { type: [String], default: [] }, // List of allergies
-    medicalHistory: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "MedicalRecord" }, // Reference to MedicalRecord model
-    ],
-    address: {
-      street: { type: String, trim: true },
-      city: { type: String, trim: true },
-      state: { type: String, trim: true },
-      zipCode: { type: String, trim: true },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
     },
-    contactNumber: { type: String, trim: true }, // Patient's contact number
-  
+    fullName: {
+      type: String,
+      trim: true,
+      required: [true, "Full name is required"],
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+    },
+    mobile_no: {
+      type: String,
+      required: [true, "Mobile number is required"],
+    },
+    age: {
+      type: Number,
+      required: [true, "Age is required"],
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: [true, "Gender is required"],
+    },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+      required: [true, "Blood group is required"],
+    },
+    profilePicture: {
+      type: String, // URL or file path to the profile picture
+    },
+    allergies: {
+      type: [String], // Array of strings for allergies
+    },
+    address: {
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      zipCode: { type: String },
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true, // Automatically adds createdAt and updatedAt fields
+  }
 );
 
-const Patient = mongoose.model("Patient", patientSchema);
-export default Patient;
+const UserProfile = mongoose.model("UserProfile", userProfileSchema);
+
+export default UserProfile;

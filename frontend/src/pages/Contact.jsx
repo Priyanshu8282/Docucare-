@@ -7,6 +7,7 @@ import { FiPhone, FiMail, FiMapPin, FiFacebook, FiTwitter, FiLinkedin, FiInstagr
 function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   // Form Validation
   const validateForm = () => {
@@ -27,6 +28,7 @@ function Contact() {
       return;
     }
 
+    setIsLoading(true); // Start loading
     try {
       // Send data to the backend
       const response = await axios.post('http://localhost:3000/admin/message', formData);
@@ -35,6 +37,8 @@ function Contact() {
       setErrors({});
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to send message. Please try again.');
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -105,9 +109,14 @@ function Contact() {
               
               <button
                 type="submit"
-                className="w-full bg-[#2C698D] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#1F4D66] transition duration-300"
+                className={`w-full font-bold py-2 px-4 rounded-lg transition duration-300 ${
+                  isLoading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-[#2C698D] text-white hover:bg-[#1F4D66]'
+                }`}
+                disabled={isLoading}
               >
-                Send Message
+                {isLoading ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           </motion.div>

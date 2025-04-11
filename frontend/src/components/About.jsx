@@ -45,7 +45,7 @@ function About() {
             <motion.button
               className="bg-gradient-to-r from-[#2C698D] to-[#5EBEC4] hover:from-[#1F4E79] hover:to-[#4597B5] text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform duration-300"
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.95 }} onClick={() => window.location.href = '/about'}
             >
               Learn More
             </motion.button>

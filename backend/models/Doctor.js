@@ -1,50 +1,24 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const doctorSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  phone: {
-    type: String,
-    required: true,
-  },
-  specialization: {
-    type: String,
-    required: true,
-  },
-  experience: {
-    type: Number,
-    required: true,
-  },
-  qualifications: {
-    type: String,
-    required: true,
-  },
+  name: { type: String },
+  age: { type: Number },
+  gender: { type: String },
+  ProfileImage: { type: String },
+  phoneNumber: { type: String },
+  specialty: { type: String },
+  yearsOfExperience: { type: Number },
   availability: [
     {
-      day: { type: String, required: true }, // Example: "Monday"
-      startTime: { type: String, required: true }, // Example: "09:00 AM"
-      endTime: { type: String, required: true } // Example: "05:00 PM"
-    }
-  ],
-  status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" },
-  appointments: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Appointment",
+      day: { type: String },
+      startTime: { type: String },
+      endTime: { type: String },
     },
   ],
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  fees: { type: Number, required: true },
+  isApproved: { type: Boolean, default: false }
 });
 
-const Doctor = mongoose.model("Doctor", doctorSchema);
-export default Doctor;
+const doctorModel = mongoose.model("Doctor", doctorSchema, "Doctor");
+
+export default doctorModel;

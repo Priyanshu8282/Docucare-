@@ -2,103 +2,113 @@ import Patient from "../../models/Patient.js";
 import User from "../../models/AuthModel.js";
 import Doctor from "../../models/Doctor.js";
 
-
 // Enum values for validation
 const GENDER_ENUM = ["Male", "Female", "Other"];
 const BLOOD_GROUP_ENUM = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
-
+// ✅ Create or Update Patient
 export const createOrUpdatePatient = async (req, res) => {
   try {
-    const { user, age, gender, bloodGroup, allergies, address, contactNumber } = req.body;
-    const profileImage = req.file ? req.file.path : null; // Get the uploaded file path
+    const { user, fullName, email, mobile_no, age, gender, bloodGroup, allergies } = req.body;
+    let { address } = req.body;
+    const profilePicture = req.file ? req.file.path : null; // Assuming req.file.path contains the Cloudinary URL
 
     // Validate required fields
-    if (!user || !age || !gender) {
-      return res.status(400).json({ message: "User, age, and gender are required" });
-    }
-
-    // Check if user exists
-    const existingUser = await User.findById(user);
-    if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
+    if (!user || !fullName || !email || !mobile_no || !age || !gender || !bloodGroup) {
+      return res.status(400).json({ message: "All required fields must be provided." });
     }
 
     // Validate enum fields
     if (!GENDER_ENUM.includes(gender)) {
-      return res.status(400).json({ message: "Invalid gender value" });
+      return res.status(400).json({ message: "Invalid gender value." });
     }
-    if (bloodGroup && !BLOOD_GROUP_ENUM.includes(bloodGroup)) {
-      return res.status(400).json({ message: "Invalid blood group value" });
+    if (!BLOOD_GROUP_ENUM.includes(bloodGroup)) {
+      return res.status(400).json({ message: "Invalid blood group value." });
     }
 
-    // Check if patient already exists
-    const existingPatient = await Patient.findOne({ user }).populate('user', 'firstName lastName email mobile_no');
+    // Validate user existence
+    const existingUser = await User.findById(user);
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found. Please create a user first." });
+    }
 
-    if (existingPatient) {
-      // Update existing patient
-      const updatedPatient = await Patient.findByIdAndUpdate(
-        existingPatient._id,
-        { age, gender, bloodGroup, profilePicture: profileImage, allergies, address, contactNumber },
-        { new: true }
-      ); // Populate user info
+    // Prepare patient data
+    const patientData = {
+      user,
+      fullName,
+      email,
+      mobile_no,
+      age,
+      gender,
+      bloodGroup,
+      profilePicture, // Store Cloudinary URL here
+      allergies,
+      address: {
+        street: address?.street || '',
+        city: address?.city || '',
+        state: address?.state || '',
+        zipCode: address?.zipCode || '',
+      },
+    };
+
+    // Check if patient profile exists
+    let patientProfile = await Patient.findOne({ user });
+
+    if (patientProfile) {
+      // Update existing profile
+      Object.assign(patientProfile, patientData);
+      await patientProfile.save();
 
       return res.status(200).json({
-        message: "Patient updated successfully",
-        updatedPatient,
-        user: {
-          firstName: existingUser.firstName,
-          lastName: existingUser.lastName,
-          email: existingUser.email,
-          mobile_no: existingUser.mobile_no,
-        },
+        message: "Patient profile updated successfully.",
+        profile: patientProfile,
       });
     } else {
-      // Create new patient
-      const newPatient = new Patient({
-        user,
-        age,
-        gender,
-        bloodGroup,
-        profilePicture: profileImage,
-        allergies,
-        address,
-        contactNumber,
-      });
-
-      await newPatient.save();
-
-      // Populate user info for the response
-     
+      // Create new profile
+      const newProfile = new Patient(patientData);
+      await newProfile.save();
 
       return res.status(201).json({
-        message: "Patient created successfully",
-        newPatient,
-    
-        user: {
-          firstName: existingUser.firstName,
-          lastName: existingUser.lastName,
-          email: existingUser.email,
-          mobile_no: existingUser.mobile_no,
-        },
+        message: "Patient profile created successfully.",
+        profile: newProfile,
       });
     }
   } catch (error) {
-    console.error("Error processing patient data:", error);
-    res.status(500).json({ message: "Error processing patient data", error });
+    console.error("Error processing patient profile:", error);
+    res.status(500).json({ message: "Error processing patient profile.", error });
   }
 };
+
+
+
+
 // ✅ Get Single Patient by ID
 export const getPatientById = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.id).populate("user").populate("medicalHistory");
-    if (!patient) return res.status(404).json({ message: "Patient not found" });
+    const { userId } = req.params; // Extract userId from request parameters
 
-    res.status(200).json(patient);
+    // Find the patient by userId
+    const patient = await Patient.findOne({ user: userId }).populate("user");
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found." });
+    }
+
+    // Include the Cloudinary URL for the profile picture
+    const profileImageUrl = patient.profilePicture
+      ? patient.profilePicture // Assuming it already contains the Cloudinary URL
+      : null;
+
+    res.status(200).json({
+      ...patient.toObject(), // Convert Mongoose document to plain object
+      profileImageUrl, // Add the profile image URL
+    });
   } catch (error) {
+    console.error("Error fetching patient:", error);
     res.status(500).json({ message: "Error fetching patient", error });
   }
 };
+
 
 // ✅ Update Patient Details
 export const updatePatient = async (req, res) => {

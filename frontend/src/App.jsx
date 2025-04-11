@@ -5,8 +5,10 @@ import Home from "./pages/Home";
 import Footer from "./components/Footer";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Dashboard from "./pages/Patient/Dashboard";
-import PatientProfile from "./pages/Patient/PatientProfile"; // Import the PatientProfile component
+import PatientDashboard from "./pages/Patient/PatientDashbord";
+import DoctorDashboard from "./pages/Doctors/DoctorDashbord";
+import AdminDashboard from "./pages/Admin/AdminDashbord";
+
 
 // Function to check if the user is authenticated
 const isAuthenticated = () => {
@@ -36,8 +38,11 @@ function App() {
           <Route path="/contact" element={<PublicRoute element={<Contact />} />} />
           
           {/* Protected Routes */}
-          <Route path="/patient-dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
-          <Route path="/patient-dashboard/profile" element={<ProtectedRoute element={<PatientProfile />} />} /> {/* New Route */}
+          <Route path="/patient-dashboard" element={<ProtectedRoute element={<PatientDashboard />} />} />
+
+          <Route path="/doctor-dashboard" element={<ProtectedRoute element={<DoctorDashboard />} />} />
+          <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
+         
 
           {/* Redirect unknown routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
